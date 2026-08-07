@@ -1,0 +1,18 @@
+==================================
+Account Number : 2000
+Transaction    : Deposit
+Amount         : Rs. 5000
+==================================
+
+==================================
+Account Number : 3000
+Transaction    : Withdraw
+Amount         : Rs. 50
+==================================
+
+==================================
+Account Number : 2400
+Transaction    : Deposit
+Amount         : Rs. 30000
+==================================
+

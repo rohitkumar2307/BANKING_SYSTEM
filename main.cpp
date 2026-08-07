@@ -23,6 +23,24 @@ public:
 
 vector<BankAccount> accounts;
 
+// Function Prototypes
+void showMenu();
+
+void createAccount();
+void viewAccounts();
+
+void depositMoney();
+void withdrawMoney();
+void checkBalance();
+void searchAccount();
+void saveAccounts();
+void deleteAccount();
+void addTransaction(int accountNumber, string type, double amount);
+void viewTransactions();
+void loadAccounts();
+
+BankAccount *findAccount(int accountNumber);
+
 void showMenu()
 {
     cout << "\n=============================\n";
@@ -34,7 +52,10 @@ void showMenu()
     cout << "3. Withdraw Money\n";
     cout << "4. Check Balance\n";
     cout << "5. View All Accounts\n";
-    cout << "6. Exit\n";
+    cout << "6. Search Account\n";
+    cout << "7. Delete Account\n";
+    cout << "8. Transaction History\n";
+    cout << "9. Exit\n";
 
     cout << "\nEnter your choice: ";
 }
@@ -105,36 +126,41 @@ void depositMoney()
     int accountNumber;
     double amount;
 
-    cout << "\n===== Deposit Money =====\n";
+    cout << "\n===== DEPOSIT MONEY =====\n";
 
     cout << "Enter Account Number: ";
     cin >> accountNumber;
 
-    for (auto &acc : accounts)
+    BankAccount *acc = findAccount(accountNumber);
+
+    if (acc == nullptr)
     {
-        if (acc.accountNumber == accountNumber)
-        {
-            cout << "Current Balance: Rs. " << acc.balance << endl;
-
-            cout << "Enter Deposit Amount: ";
-            cin >> amount;
-
-            if (amount <= 0)
-            {
-                cout << "Invalid Amount!\n";
-                return;
-            }
-
-            acc.balance += amount;
-
-            cout << "\nAmount Deposited Successfully!\n";
-            cout << "Updated Balance: Rs. " << acc.balance << endl;
-
-            return;
-        }
+        cout << "Account Not Found!\n";
+        return;
     }
 
-    cout << "Account Not Found!\n";
+    cout << "Current Balance: Rs. " << acc->balance << endl;
+
+    cout << "Enter Deposit Amount: ";
+    cin >> amount;
+
+    if (amount <= 0)
+    {
+        cout << "Invalid Amount!\n";
+        return;
+    }
+
+    acc->balance += amount;
+
+    addTransaction(
+        acc->accountNumber,
+        "Deposit",
+        amount);
+
+    saveAccounts();
+
+    cout << "\nDeposit Successful!\n";
+    cout << "Updated Balance: Rs. " << acc->balance << endl;
 }
 
 void withdrawMoney()
@@ -142,36 +168,125 @@ void withdrawMoney()
     int accountNumber;
     double amount;
 
-    cout << "\n===== Withdraw Money =====\n";
+    cout << "\n===== WITHDRAW MONEY =====\n";
 
     cout << "Enter Account Number: ";
     cin >> accountNumber;
 
-    for (auto &acc : accounts)
+    BankAccount *acc = findAccount(accountNumber);
+
+    if (acc == nullptr)
     {
-        if (acc.accountNumber == accountNumber)
+        cout << "Account Not Found!\n";
+        return;
+    }
+
+    cout << "Current Balance: Rs. " << acc->balance << endl;
+
+    cout << "Enter Withdrawal Amount: ";
+    cin >> amount;
+
+    if (amount <= 0)
+    {
+        cout << "Invalid Amount!\n";
+        return;
+    }
+
+    if (amount > acc->balance)
+    {
+        cout << "Insufficient Balance!\n";
+        return;
+    }
+
+    acc->balance -= amount;
+
+    addTransaction(
+        acc->accountNumber,
+        "Withdraw",
+        amount);
+
+    saveAccounts();
+
+    cout << "\nWithdrawal Successful!\n";
+    cout << "Remaining Balance: Rs. " << acc->balance << endl;
+}
+
+void checkBalance()
+{
+    int accountNumber;
+
+    cout << "\n===== CHECK BALANCE =====\n";
+
+    cout << "Enter Account Number: ";
+    cin >> accountNumber;
+
+    BankAccount *acc = findAccount(accountNumber);
+
+    if (acc == nullptr)
+    {
+        cout << "Account Not Found!\n";
+        return;
+    }
+
+    cout << "\nAccount Holder : " << acc->name << endl;
+    cout << "Current Balance: Rs. " << acc->balance << endl;
+}
+
+void searchAccount()
+{
+    int accountNumber;
+
+    cout << "\n===== SEARCH ACCOUNT =====\n";
+
+    cout << "Enter Account Number: ";
+    cin >> accountNumber;
+
+    BankAccount *acc = findAccount(accountNumber);
+
+    if (acc == nullptr)
+    {
+        cout << "Account Not Found!\n";
+        return;
+    }
+
+    cout << "\n========== ACCOUNT DETAILS ==========\n";
+    cout << "Account Number : " << acc->accountNumber << endl;
+    cout << "Account Holder : " << acc->name << endl;
+    cout << "Balance        : Rs. " << acc->balance << endl;
+}
+
+void deleteAccount()
+{
+    int accountNumber;
+
+    cout << "\n===== DELETE ACCOUNT =====\n";
+    cout << "Enter Account Number: ";
+    cin >> accountNumber;
+
+    for (int i = 0; i < accounts.size(); i++)
+    {
+        if (accounts[i].accountNumber == accountNumber)
         {
-            cout << "Current Balance: Rs. " << acc.balance << endl;
+            char choice;
 
-            cout << "Enter Withdrawal Amount: ";
-            cin >> amount;
+            cout << "Account Holder: " << accounts[i].name << endl;
+            cout << "Balance: Rs. " << accounts[i].balance << endl;
 
-            if (amount <= 0)
+            cout << "\nAre you sure you want to delete this account? (Y/N): ";
+            cin >> choice;
+
+            if (choice == 'Y' || choice == 'y')
             {
-                cout << "Invalid Amount!\n";
-                return;
-            }
+                accounts.erase(accounts.begin() + i);
 
-            if (amount > acc.balance)
+                saveAccounts();
+
+                cout << "\nAccount Deleted Successfully!\n";
+            }
+            else
             {
-                cout << "Insufficient Balance!\n";
-                return;
+                cout << "\nDeletion Cancelled.\n";
             }
-
-            acc.balance -= amount;
-
-            cout << "\nWithdrawal Successful!\n";
-            cout << "Remaining Balance: Rs. " << acc.balance << endl;
 
             return;
         }
@@ -180,26 +295,30 @@ void withdrawMoney()
     cout << "Account Not Found!\n";
 }
 
-void checkBalance()
+void viewTransactions()
 {
-    int accountNumber;
+    cout << "\nOpening transactions...\n";
 
-    cout << "\n===== Check Balance =====\n";
+    ifstream file("transactions.txt");
 
-    cout << "Enter Account Number: ";
-    cin >> accountNumber;
-
-    for (auto &acc : accounts)
+    if (!file)
     {
-        if (acc.accountNumber == accountNumber)
-        {
-            cout << "\nAccount Holder : " << acc.name << endl;
-            cout << "Current Balance: Rs. " << acc.balance << endl;
-            return;
-        }
+        cout << "No Transactions Found!\n";
+        return;
+    }
+    
+    cout << "File Opened Successfully!\n";
+
+    cout << "\n========== TRANSACTION HISTORY ==========\n\n";
+
+    string line;
+
+    while (getline(file, line))
+    {
+        cout << line << endl;
     }
 
-    cout << "Account Not Found!\n";
+    file.close();
 }
 
 void saveAccounts()
@@ -220,6 +339,27 @@ void saveAccounts()
     }
 
     file.close();
+}
+
+void addTransaction(int accountNumber, string type, double amount)
+{
+    ofstream file("transactions.txt", ios::app);
+
+    if (!file)
+    {
+        cout << "Error Opening Transaction File!\n";
+        return;
+    }
+
+    file << "==================================\n";
+    file << "Account Number : " << accountNumber << endl;
+    file << "Transaction    : " << type << endl;
+    file << "Amount         : Rs. " << amount << endl;
+    file << "==================================\n\n";
+
+    file.close();
+
+    cout << "Transaction Logged!\n";
 }
 
 void loadAccounts()
@@ -254,6 +394,19 @@ void loadAccounts()
     file.close();
 }
 
+BankAccount *findAccount(int accountNumber)
+{
+    for (auto &acc : accounts)
+    {
+        if (acc.accountNumber == accountNumber)
+        {
+            return &acc;
+        }
+    }
+
+    return nullptr;
+}
+
 int main()
 {
     loadAccounts();
@@ -270,17 +423,14 @@ int main()
         {
         case 1:
             createAccount();
-            saveAccounts();
             break;
 
         case 2:
             depositMoney();
-            saveAccounts();
             break;
 
         case 3:
             withdrawMoney();
-            saveAccounts();
             break;
 
         case 4:
@@ -292,14 +442,26 @@ int main()
             break;
 
         case 6:
-            cout << "\nThank you for using the Banking System.\n";
+            searchAccount();
+            break;
+
+        case 7:
+            deleteAccount();
+            break;
+
+        case 8:
+            viewTransactions();
+            break;
+
+        case 9:
+            cout << "\nThank you for using the Banking Management System.\n";
             break;
 
         default:
             cout << "\nInvalid Choice!\n";
         }
 
-    } while (choice != 6);
+    } while (choice != 9);
 
     return 0;
 }
